@@ -1,3 +1,4 @@
+import { CYCLE_LENGTH } from "./cycle";
 import { PLAN_SLOTS } from "./generator";
 import type { PlanId, Profile } from "./types";
 
@@ -7,8 +8,9 @@ export const DAY_NAMES = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "sa
 /** Jours par défaut : au moins 48 h entre deux séances intenses quand c'est possible. */
 export const DEFAULT_DAYS: Record<PlanId, number[]> = {
   start: [1, 4], // mar, ven
-  found: [0, 2, 5], // lun, mer, sam
+  build: [0, 2, 5], // lun, mer, sam
   pro: [0, 1, 3, 5], // lun, mar, jeu, sam
+  race: [0, 1, 3, 4, 5], // lun, mar, jeu, ven, sam
 };
 
 const DAY_MS = 86_400_000;
@@ -53,4 +55,25 @@ export function dateOfSlot(profile: Profile, week: number, slot: number): Date {
   const d = parseISODate(profile.startDate);
   d.setDate(d.getDate() + (week - 1) * 7 + (days[slot] ?? slot));
   return d;
+}
+
+/**
+ * Race Prep : lundi de la semaine 1 tel que la course tombe en semaine 12 du cycle.
+ * Si la course est à plus de 14 semaines, on ajoute un cycle de préparation avant ;
+ * si elle est à moins de 12 semaines, l'athlète entre dans le cycle en cours de route.
+ */
+export function raceStartDate(raceDate: string, today: Date): string {
+  const start = mondayOf(parseISODate(raceDate));
+  start.setDate(start.getDate() - (CYCLE_LENGTH - 1) * 7);
+  // On accepte de démarrer jusqu'à 2 semaines plus tard plutôt que d'ajouter un cycle presque entier avant
+  const latest = mondayOf(today);
+  latest.setDate(latest.getDate() + 14);
+  while (start.getTime() > latest.getTime()) start.setDate(start.getDate() - CYCLE_LENGTH * 7);
+  return toISODate(start);
+}
+
+/** Nombre de jours avant la course (négatif si passée). */
+export function daysUntil(isoDate: string, today: Date): number {
+  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((parseISODate(isoDate).getTime() - t.getTime()) / DAY_MS);
 }

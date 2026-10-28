@@ -1,4 +1,5 @@
-export type PlanId = "start" | "found" | "pro";
+export type PlanId = "start" | "build" | "pro" | "race";
+export type Billing = "monthly" | "yearly";
 export type Level = "debutant" | "intermediaire" | "avance";
 export type Sex = "femme" | "homme";
 export type Division = "open" | "pro";
@@ -10,7 +11,9 @@ export type SessionKind =
   | "force-upper" // Force haut du corps + WOD gym
   | "engine" // Course / ergos
   | "hyrox" // Stations + course compromise
-  | "simulation"; // Simulation Hyrox (fin de cycle)
+  | "simulation" // Simulation Hyrox (fin de cycle)
+  | "long" // Endurance longue zone 2 (Race Prep)
+  | "race-activation"; // Rappel d'activation la veille de la course (Race Prep)
 
 export interface Profile {
   plan: PlanId;
@@ -21,6 +24,9 @@ export interface Profile {
   days: number[];
   /** Date ISO (yyyy-mm-dd) du lundi de la semaine 1 */
   startDate: string;
+  /** Race Prep : date ISO de la course, placée en semaine 12 du cycle */
+  raceDate?: string;
+  billing?: Billing;
 }
 
 export interface Item {

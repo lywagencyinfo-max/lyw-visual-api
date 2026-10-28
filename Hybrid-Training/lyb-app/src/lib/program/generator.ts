@@ -1,4 +1,4 @@
-import { CYCLE_LENGTH, STRENGTH_SCHEME, pick, weekMeta } from "./cycle";
+import { CYCLE_LENGTH, STRENGTH_SCHEME, pick, scale, weekMeta } from "./cycle";
 import { buildMobility, type MobilityFocus } from "./mobility";
 import { RACE_ORDER, STATIONS, STATION_PAIRS, stationItem, type StationId } from "./stations";
 import type { Block, Item, Level, PlanId, Profile, Session, SessionKind, WeekMeta } from "./types";
@@ -8,9 +8,13 @@ import { ENGINE, FINISHERS, FLUSH_WODS, WODS } from "./workouts";
 /** Ordre des séances dans la semaine pour chaque formule. */
 export const PLAN_SLOTS: Record<PlanId, SessionKind[]> = {
   start: ["force-wod", "hyrox"],
-  found: ["force-wod", "engine", "hyrox"],
+  build: ["force-wod", "engine", "hyrox"],
   pro: ["force-lower", "engine", "force-upper", "hyrox"],
+  race: ["force-lower", "engine", "hyrox", "force-upper", "long"],
 };
+
+/** Race Prep : répétition générale en S10 (2 semaines avant la course), activation la veille en S12. */
+const REHEARSAL_WEEK = 10;
 
 interface Lift {
   name: string;
@@ -198,6 +202,7 @@ function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: numbe
       };
     }
     case "simulation": {
+      const rehearsal = profile.plan === "race" && w.week === REHEARSAL_WEEK && w.cycle === raceCycle(profile);
       const cfg = {
         debutant: { run: 500, fraction: 0.5, label: "Demi-Hyrox" },
         intermediaire: { run: 1000, fraction: 0.75, label: "Hyrox à 75 %" },
@@ -208,8 +213,10 @@ function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: numbe
         stationItem(id, cfg.fraction, sex, division, level),
       ]);
       return {
-        title: `Simulation — ${cfg.label}`,
-        objective: "Tester ta forme en fin de cycle, dans l'ordre exact des stations, et fixer tes allures pour le cycle suivant.",
+        title: `${rehearsal ? "Répétition générale" : "Simulation"} — ${cfg.label}`,
+        objective: rehearsal
+          ? "Répéter la course 2 semaines avant le jour J, dans l'ordre exact des stations, pour valider allures, transitions et nutrition."
+          : "Tester ta forme en fin de cycle, dans l'ordre exact des stations, et fixer tes allures pour le cycle suivant.",
         warmupFocus: "hyrox",
         potentiate: [{ name: "2 × 200 m à allure course", dose: "r 1'" }, { name: "5 wall balls + 10 m sled push léger", dose: "1 tour" }],
         main: [{
@@ -219,6 +226,49 @@ function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: numbe
         }],
         mobility: "fullbody",
         tags: ["Hyrox", "Simulation", "Test"],
+      };
+    }
+    case "long": {
+      const base = w.deload ? 40 : { base: 45, build: 55, peak: 65, taper: 30 }[w.phase];
+      const total = scale(base, level, 5);
+      const hybrid = w.week % 2 === 0;
+      const items: Item[] = hybrid
+        ? [
+            { name: "Course zone 2", dose: `${Math.round(total * 0.4)}'` },
+            { name: w.week % 4 === 0 ? "SkiErg zone 2" : "Rameur zone 2", dose: `${Math.round(total * 0.2)}'`, cue: "Enchaîne sans pause, comme une transition" },
+            { name: "Course zone 2", dose: `${Math.round(total * 0.4)}'` },
+          ]
+        : [
+            { name: "Course zone 2", dose: `${total}'`, cue: "Tu dois pouvoir tenir une conversation" },
+            { name: "Lignes droites", dose: "4 × 80 m relâchées" },
+          ];
+      return {
+        title: hybrid ? "Endurance longue hybride" : "Sortie longue",
+        objective: "Construire la base aérobie qui permet de récupérer entre les stations et de tenir l'allure jusqu'au 8e km.",
+        warmupFocus: "run",
+        potentiate: [{ name: "Footing très progressif", dose: "les 5 premières minutes du bloc" }],
+        main: [{ label: "A", title: hybrid ? "Zone 2 course + ergo" : "Zone 2 continue", format: `${total}' continu`, minutes: total, items }],
+        mobility: "ankles",
+        tags: ["Endurance", "Zone 2", "Race Prep"],
+      };
+    }
+    case "race-activation": {
+      return {
+        title: "Activation pré-course",
+        objective: "Garder du tonus sans fatigue : la séance se fait idéalement la veille de la course.",
+        warmupFocus: "hyrox",
+        potentiate: [{ name: "Lignes droites", dose: "3 × 80 m" }],
+        main: [{
+          label: "A", title: "Rappel allure & stations", format: "Très léger · RPE 5", minutes: 15,
+          items: [
+            { name: "Footing", dose: "8' facile" },
+            { name: "Course allure course", dose: "3 × 200 m · r 1'" },
+            { name: "SkiErg, wall balls, sled push, rameur", dose: "20 s chacun, technique parfaite" },
+          ],
+          note: "Prépare ton sac ce soir : chaussures, gants, ceinture, gels, eau, tenue, pièce d'identité.",
+        }],
+        mobility: "hips",
+        tags: ["Race Prep", "Activation", "Veille de course"],
       };
     }
   }
@@ -232,10 +282,21 @@ const PHASE_NOTES: Record<WeekMeta["phase"], string> = {
 };
 
 function coachNote(w: WeekMeta & { cycle: number }, kind: SessionKind): string {
+  if (kind === "race-activation") return "Dors bien, hydrate-toi, mange des glucides familiers. Rien de nouveau demain : ni chaussures, ni gel, ni petit-déjeuner.";
+  if (kind === "simulation" && w.week === REHEARSAL_WEEK) return "Répétition générale : mêmes chaussures, même petit-déjeuner et même échauffement que le jour J. Note tes splits pour fixer ta stratégie de course.";
   if (kind === "simulation") return "Échauffe-toi bien, pars plus lentement que tu ne le penses sur le 1er km et vise des splits réguliers.";
   if (w.deload) return "Semaine de décharge : volume réduit, RPE ≤ 6. C'est ici que ton corps assimile le travail des 3 dernières semaines — ne la saute pas.";
   if (w.cycle > 1 && w.week === 1) return `Cycle ${w.cycle} : reprends tes charges et allures de référence de la simulation, et vise +2 à 5 %. ${PHASE_NOTES.base}`;
   return PHASE_NOTES[w.phase];
+}
+
+/** Cycle qui contient la course (les cycles précédents sont des cycles de préparation classiques). */
+function raceCycle(profile: Profile): number {
+  if (!profile.raceDate) return 1;
+  const [y1, m1, d1] = profile.startDate.split("-").map(Number);
+  const [y2, m2, d2] = profile.raceDate.split("-").map(Number);
+  const days = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+  return weekMeta(Math.floor(days / 7) + 1).cycle;
 }
 
 export function sessionsPerWeek(plan: PlanId): number {
@@ -246,13 +307,16 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
   const slots = PLAN_SLOTS[profile.plan];
   const w = weekMeta(absWeek);
   let kind = slots[slot];
-  if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "simulation";
+  if (profile.plan === "race" && w.cycle === raceCycle(profile)) {
+    if (w.week === REHEARSAL_WEEK && slot === slots.length - 1) kind = "simulation";
+    if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "race-activation";
+  } else if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "simulation";
   const idx = w.week - 1 + (w.cycle - 1) * 3 + slot;
   const b = build(kind, profile, w, idx);
   const warmup = buildWarmup(b.warmupFocus, idx, b.potentiate);
   const mobility = buildMobility(b.mobility, idx);
   const minutes = [...warmup, ...b.main, mobility].reduce((sum, blk) => sum + blk.minutes, 0);
-  const intensity = kind === "simulation" ? 5 : w.intensity;
+  const intensity = kind === "simulation" ? 5 : kind === "race-activation" ? 2 : w.intensity;
   return {
     id: `w${absWeek}-s${slot}`,
     week: absWeek,
@@ -262,7 +326,7 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
     title: b.title,
     objective: b.objective,
     intensity,
-    rpe: w.deload ? "RPE 5-6" : intensity >= 5 ? "RPE 8-9" : intensity >= 4 ? "RPE 7-8" : "RPE 6-7",
+    rpe: w.deload || intensity <= 2 ? "RPE 5-6" : intensity >= 5 ? "RPE 8-9" : intensity >= 4 ? "RPE 7-8" : "RPE 6-7",
     minutes: Math.round(minutes / 5) * 5,
     warmup,
     main: b.main,

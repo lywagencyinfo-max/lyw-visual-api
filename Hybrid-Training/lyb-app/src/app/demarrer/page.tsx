@@ -3,10 +3,12 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
+import { BillingToggle } from "@/components/PricingCards";
+import { CYCLE_LENGTH } from "@/lib/program/cycle";
 import { Logo } from "@/components/ui";
-import { PLANS, formatPrice } from "@/lib/plans";
-import { DAY_LABELS, DEFAULT_DAYS, mondayOf, toISODate } from "@/lib/program/schedule";
-import type { Division, Level, PlanId, Sex } from "@/lib/program/types";
+import { PLANS, TRIAL_DAYS, priceFor } from "@/lib/plans";
+import { DAY_LABELS, DAY_NAMES, DEFAULT_DAYS, daysUntil, mondayOf, parseISODate, raceStartDate, toISODate } from "@/lib/program/schedule";
+import type { Billing, Division, Level, PlanId, Sex } from "@/lib/program/types";
 import { saveProfile } from "@/lib/store";
 
 const LEVELS: { id: Level; label: string; text: string }[] = [
@@ -30,7 +32,7 @@ function Choice({ active, onClick, children }: { active: boolean; onClick: () =>
 function Onboarding() {
   const router = useRouter();
   const params = useSearchParams();
-  const initialPlan = (PLANS.find((p) => p.id === params.get("plan"))?.id ?? "found") as PlanId;
+  const initialPlan = (PLANS.find((p) => p.id === params.get("plan"))?.id ?? "build") as PlanId;
 
   const [plan, setPlanState] = useState<PlanId>(initialPlan);
   const [level, setLevel] = useState<Level>("intermediaire");
@@ -38,8 +40,14 @@ function Onboarding() {
   const [division, setDivision] = useState<Division>("open");
   const [days, setDays] = useState<number[]>(DEFAULT_DAYS[initialPlan]);
   const [start, setStart] = useState<"this" | "next">("this");
+  const [billing, setBilling] = useState<Billing>(params.get("billing") === "yearly" ? "yearly" : "monthly");
+  const [raceDate, setRaceDate] = useState("");
 
-  const perWeek = PLANS.find((p) => p.id === plan)!.perWeek;
+  const current = PLANS.find((p) => p.id === plan)!;
+  const perWeek = current.perWeek;
+  const isRace = plan === "race";
+  const raceIn = raceDate ? daysUntil(raceDate, new Date()) : null;
+  const raceValid = !isRace || (raceIn !== null && raceIn >= 7);
 
   const setPlan = (id: PlanId) => {
     setPlanState(id);
@@ -59,7 +67,8 @@ function Onboarding() {
   const submit = () => {
     const monday = mondayOf(new Date());
     if (start === "next") monday.setDate(monday.getDate() + 7);
-    saveProfile({ plan, level, sex, division, days, startDate: toISODate(monday) });
+    const startDate = isRace ? raceStartDate(raceDate, new Date()) : toISODate(monday);
+    saveProfile({ plan, level, sex, division, days, startDate, billing: current.yearly ? billing : "monthly", ...(isRace && { raceDate }) });
     router.push("/app");
   };
 
@@ -70,13 +79,16 @@ function Onboarding() {
       <p className="mt-2 text-ink-soft">2 minutes pour adapter les séances à ton niveau et ton planning.</p>
 
       <section className="mt-10">
-        <h2 className="mb-3 font-bold">1. Ta formule</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-bold">1. Ta formule</h2>
+          <BillingToggle billing={billing} onChange={setBilling} />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {PLANS.map((p) => (
             <Choice key={p.id} active={plan === p.id} onClick={() => setPlan(p.id)}>
               <p className="font-black">{p.name}</p>
               <p className="text-sm text-ink-soft">{p.perWeek} séances / sem.</p>
-              <p className="mt-1 text-sm font-semibold text-mint">{formatPrice(p.price)} / mois</p>
+              <p className="mt-1 text-sm font-semibold text-mint">{priceFor(p, billing).main} {priceFor(p, billing).period}</p>
             </Choice>
           ))}
         </div>
@@ -125,22 +137,51 @@ function Onboarding() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 font-bold">5. Démarrage</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Choice active={start === "this"} onClick={() => setStart("this")}>Cette semaine</Choice>
-          <Choice active={start === "next"} onClick={() => setStart("next")}>Lundi prochain</Choice>
-        </div>
+        {isRace ? (
+          <>
+            <h2 className="mb-1 font-bold">5. Date de ta course</h2>
+            <p className="mb-3 text-sm text-ink-dim">
+              Le programme est calé pour que la course tombe en semaine 12 : répétition générale 2 semaines avant, affûtage la dernière semaine.
+            </p>
+            <input
+              type="date"
+              value={raceDate}
+              min={toISODate(new Date())}
+              onChange={(e) => setRaceDate(e.target.value)}
+              className="w-full rounded-xl border border-line bg-bg-soft p-4 text-ink [color-scheme:dark]"
+            />
+            {raceIn !== null && raceIn < 7 && <p className="mt-2 text-sm text-rose-soft">Ta course doit être dans au moins 7 jours.</p>}
+            {raceIn !== null && raceIn >= 7 && (
+              <p className="mt-2 text-sm text-ink-soft">
+                Course dans {raceIn} jours ({Math.ceil(raceIn / 7)} semaines).
+                {raceIn < 77 && ` Préparation courte : tu démarres directement en semaine ${CYCLE_LENGTH - Math.round((mondayOf(parseISODate(raceDate)).getTime() - mondayOf(new Date()).getTime()) / (7 * 86_400_000))} du cycle.`}
+                {" "}Idéalement, ta dernière séance de la semaine tombe la veille ({DAY_NAMES[(parseISODate(raceDate).getDay() + 5) % 7]}).
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="mb-3 font-bold">5. Démarrage</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Choice active={start === "this"} onClick={() => setStart("this")}>Cette semaine</Choice>
+              <Choice active={start === "next"} onClick={() => setStart("next")}>Lundi prochain</Choice>
+            </div>
+          </>
+        )}
       </section>
 
       <button
         type="button"
-        disabled={days.length !== perWeek}
+        disabled={days.length !== perWeek || !raceValid}
         onClick={submit}
         className="mt-10 w-full rounded-xl bg-mint px-5 py-4 text-lg font-black text-bg disabled:opacity-40"
       >
-        Générer mon programme
+        Commencer mes {TRIAL_DAYS} jours gratuits
       </button>
-      <p className="mt-3 text-center text-xs text-ink-dim">Démo : le paiement n&apos;est pas encore branché, aucun prélèvement n&apos;est effectué.</p>
+      <p className="mt-3 text-center text-sm text-ink-soft">
+        Puis {priceFor(current, current.yearly ? billing : "monthly").main} {priceFor(current, current.yearly ? billing : "monthly").period}{" · "}annulable à tout moment pendant l&apos;essai.
+      </p>
+      <p className="mt-1 text-center text-xs text-ink-dim">Démo : le paiement n&apos;est pas encore branché, aucun prélèvement n&apos;est effectué.</p>
     </main>
   );
 }

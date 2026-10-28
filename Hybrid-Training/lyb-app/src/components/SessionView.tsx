@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import clsx from "clsx";
-import { CheckCircle2, Circle, Clock, Printer } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Printer, Trophy } from "lucide-react";
 import type { Block, Session } from "@/lib/program/types";
 import { IntensityDots, Pill } from "./ui";
 
@@ -18,7 +21,7 @@ export function BlockCard({ block, tone }: { block: Block; tone: "mint" | "jaune
           {block.label}
         </span>
         <h4 className="font-bold">{block.title}</h4>
-        <span className="ml-auto text-xs text-ink-dim">{block.minutes}&apos;</span>
+        {block.minutes > 0 && <span className="ml-auto text-xs text-ink-dim">{block.minutes}&apos;</span>}
       </div>
       {block.format && <p className="mt-2 text-sm font-semibold text-jaune">{block.format}</p>}
       <ul className="mt-3 space-y-2">
@@ -51,7 +54,49 @@ function Section({ n, title, minutes, children }: { n: number; title: string; mi
 
 const sum = (blocks: Block[]) => blocks.reduce((s, b) => s + b.minutes, 0);
 
-export function SessionView({ session, done, onToggleDone }: { session: Session; done?: boolean; onToggleDone?: () => void }) {
+const TIME_RE = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
+
+function ResultInput({ value, onSave }: { value?: string; onSave: (time: string) => void }) {
+  const [draft, setDraft] = useState(value ?? "");
+  const valid = draft === "" || TIME_RE.test(draft.trim());
+  return (
+    <div className="no-print mt-3 rounded-xl border border-jaune/40 bg-jaune/10 p-4">
+      <label className="flex items-center gap-2 text-sm font-bold text-jaune" htmlFor="sim-time">
+        <Trophy className="h-4 w-4" /> Ton temps de simulation
+      </label>
+      <div className="mt-2 flex gap-2">
+        <input
+          id="sim-time"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="h:mm:ss ou mm:ss"
+          inputMode="numeric"
+          className="min-w-0 flex-1 rounded-lg border border-line bg-bg p-2.5 text-ink"
+        />
+        <button
+          type="button"
+          disabled={!valid || draft.trim() === (value ?? "")}
+          onClick={() => onSave(draft.trim())}
+          className="rounded-lg bg-jaune px-4 font-bold text-bg disabled:opacity-40"
+        >
+          Enregistrer
+        </button>
+      </div>
+      {!valid && <p className="mt-1 text-xs text-rose-soft">Format attendu : 1:12:30 ou 58:40</p>}
+      {value && valid && <p className="mt-1 text-xs text-ink-soft">Enregistré : {value}. Il sert de référence pour ton prochain cycle.</p>}
+    </div>
+  );
+}
+
+interface Props {
+  session: Session;
+  done?: boolean;
+  onToggleDone?: () => void;
+  result?: string;
+  onSaveResult?: (time: string) => void;
+}
+
+export function SessionView({ session, done, onToggleDone, result, onSaveResult }: Props) {
   return (
     <article>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -94,6 +139,7 @@ export function SessionView({ session, done, onToggleDone }: { session: Session;
       </Section>
       <Section n={2} title="Entraînement" minutes={sum(session.main)}>
         {session.main.map((b) => <BlockCard key={b.label + b.title} block={b} tone="jaune" />)}
+        {session.kind === "simulation" && onSaveResult && <ResultInput key={session.id} value={result} onSave={onSaveResult} />}
       </Section>
       <Section n={3} title="Mobilité" minutes={session.mobility.minutes}>
         <BlockCard block={session.mobility} tone="rose" />

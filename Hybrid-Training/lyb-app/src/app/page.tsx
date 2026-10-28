@@ -20,6 +20,8 @@ const PILLARS = [
 const FAQ = [
   { q: "De quel matériel ai-je besoin ?", a: "Une salle de cross-training ou une salle équipée Hyrox est idéale (rameur, SkiErg, sled, wall balls, kettlebells). Chaque station propose une alternative si le matériel manque." },
   { q: "Je n'ai jamais fait d'Hyrox, est-ce pour moi ?", a: "Oui. Le niveau débutant réduit les volumes, remplace les mouvements techniques (goblet squat, ring rows…) et termine le cycle par un demi-Hyrox." },
+  { q: "Comment fonctionne l'essai gratuit ?", a: "Tu as 3 jours pour tester ta formule avec de vraies séances. Tu peux annuler à tout moment pendant l'essai, sans être prélevé." },
+  { q: "J'ai une course Hyrox de prévue, quelle formule choisir ?", a: "Race Prep : indique ta date de course, le programme se cale pour qu'elle tombe en fin de cycle, avec une répétition générale 2 semaines avant, un affûtage et un plan pour le jour J." },
   { q: "Que se passe-t-il après 12 semaines ?", a: "Un nouveau cycle démarre avec des WODs et des lifts différents. Tu repars de tes temps de simulation pour viser +2 à 5 %." },
   { q: "Puis-je changer de formule ?", a: "À tout moment. Ta progression est conservée et la nouvelle répartition des séances s'applique dès la semaine suivante." },
 ];
@@ -52,7 +54,7 @@ export default function Home() {
           bloc principal et mobilité, dans un cycle de 12 semaines qui fait varier les mouvements, l&apos;intensité et les formats.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/demarrer" className="rounded-xl bg-mint px-5 py-3 font-bold text-bg hover:brightness-110">Créer mon programme</Link>
+          <Link href="/demarrer" className="rounded-xl bg-mint px-5 py-3 font-bold text-bg hover:brightness-110">Essayer 3 jours gratuits</Link>
           <a href="#formules" className="rounded-xl border border-line px-5 py-3 font-bold hover:bg-bg-soft">Voir les formules</a>
         </div>
       </section>
@@ -129,7 +131,7 @@ export default function Home() {
 
       <section id="formules" className="mx-auto max-w-6xl scroll-mt-8 px-4 py-16">
         <h2 className="text-3xl font-black">Les formules</h2>
-        <p className="mt-2 mb-10 text-ink-soft">Sans engagement. Chaque séance est complète : échauffement, entraînement, mobilité.</p>
+        <p className="mt-2 mb-8 text-ink-soft">Sans engagement. Chaque séance est complète : échauffement, entraînement, mobilité.</p>
         <PricingCards />
       </section>
 

@@ -5,6 +5,7 @@ import type { Profile } from "./program/types";
 
 const PROFILE_KEY = "lyb.profile";
 const DONE_KEY = "lyb.done";
+const RESULTS_KEY = "lyb.results";
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -33,15 +34,25 @@ export function clearProfile() {
   } catch {}
 }
 
+function readProfile(): Profile | null {
+  const p = read<(Omit<Profile, "plan"> & { plan: string }) | null>(PROFILE_KEY, null);
+  if (!p) return null;
+  // La formule « Found » a été renommée « Build »
+  return { ...p, plan: p.plan === "found" ? "build" : p.plan } as Profile;
+}
+
 /** Profil + séances terminées, persistés localement. `ready` passe à true après hydratation. */
 export function useAthlete() {
   const [ready, setReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [done, setDone] = useState<Record<string, string>>({});
+  // Temps de simulation saisis (id de séance → "mm:ss" ou "h:mm:ss")
+  const [results, setResults] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    setProfile(read<Profile | null>(PROFILE_KEY, null));
+    setProfile(readProfile());
     setDone(read<Record<string, string>>(DONE_KEY, {}));
+    setResults(read<Record<string, string>>(RESULTS_KEY, {}));
     setReady(true);
   }, []);
 
@@ -55,5 +66,15 @@ export function useAthlete() {
     });
   }, []);
 
-  return { ready, profile, done, toggleDone };
+  const saveResult = useCallback((id: string, time: string) => {
+    setResults((prev) => {
+      const next = { ...prev };
+      if (time) next[id] = time;
+      else delete next[id];
+      write(RESULTS_KEY, next);
+      return next;
+    });
+  }, []);
+
+  return { ready, profile, done, toggleDone, results, saveResult };
 }

@@ -15,11 +15,22 @@ npm run check:program  # vérifie toutes les combinaisons formule × niveau × 3
 
 ## Formules
 
-| Formule | Séances / sem. | Prix | Répartition de la semaine |
-|---|---|---|---|
-| Start | 2 | 12,99 €/mois | Force + WOD · Hyrox (stations + course compromise) |
-| Found | 3 | 17,99 €/mois | Force + WOD · Engine (course/ergos) · Hyrox |
-| Pro | 4 | 22,99 €/mois | Force bas du corps + finisher · Engine · Haut du corps + WOD gym · Hyrox |
+Essai gratuit de **3 jours** sur toutes les formules. Annuel ≈ 2 mois offerts.
+
+| Formule | Séances / sem. | Mensuel | Annuel | Répartition de la semaine |
+|---|---|---|---|---|
+| Start | 2 | 12,99 € | 129 € | Force + WOD · Hyrox (stations + course compromise) |
+| Build | 3 | 17,99 € | 179 € | Force + WOD · Engine (course/ergos) · Hyrox |
+| Pro | 4 | 22,99 € | 229 € | Force bas du corps + finisher · Engine · Haut du corps + WOD gym · Hyrox |
+| Race Prep | 5 | 29,99 € | — | Force bas · Engine · Hyrox · Haut du corps + WOD · Sortie longue zone 2 |
+
+**Race Prep** : l'athlète saisit sa date de course, le cycle est calé pour qu'elle tombe en semaine 12
+(répétition générale en S10, affûtage en S12, séance d'activation sur la dernière séance avant la course,
+plan du jour J). Course à plus de 14 semaines → un cycle de préparation classique est ajouté avant ;
+à moins de 12 semaines → l'athlète entre dans le cycle en cours de route.
+
+Le temps de chaque simulation peut être enregistré : il sert de référence pour le cycle suivant
+(et pourra alimenter un classement communautaire quand les comptes seront en place).
 
 ## Logique d'entraînement (`lyb-app/src/lib/program`)
 
