@@ -1,4 +1,5 @@
 import { CYCLE_LENGTH, STRENGTH_SCHEME, pick, scale, weekMeta } from "./cycle";
+import { avoidBlock, avoidLabel } from "./avoid";
 import { ALL_EQUIPMENT, adaptBlock, adaptLabel, type Equip } from "./equipment";
 import { buildMobility, type MobilityFocus } from "./mobility";
 import { RACE_ORDER, STATIONS, STATION_PAIRS, stationItem, type StationId } from "./stations";
@@ -316,10 +317,13 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
   const b = build(kind, profile, w, idx);
   const have = new Set<Equip>(profile.equipment ?? ALL_EQUIPMENT);
   let adapted = 0;
+  const avoid = profile.avoid ?? [];
   const adapt = (blk: Block) => {
     const r = adaptBlock(blk, have);
-    adapted += r.changes;
-    return r.block;
+    const a = avoidBlock(r.block, have, avoid);
+    // Un mouvement inchangé garde la même référence : un double remplacement ne compte qu'une fois
+    adapted += a.block.items.filter((it, i) => it !== blk.items[i]).length;
+    return a.block;
   };
   const warmup = buildWarmup(b.warmupFocus, idx, b.potentiate).map(adapt);
   const main = b.main.map(adapt);
@@ -341,7 +345,7 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
     main,
     mobility,
     coachNote: coachNote(w, kind),
-    tags: [...new Set(b.tags.map((tag) => adaptLabel(tag, have)))],
+    tags: [...new Set(b.tags.map((tag) => avoidLabel(adaptLabel(tag, have), have, avoid)))],
     adapted,
   };
 }

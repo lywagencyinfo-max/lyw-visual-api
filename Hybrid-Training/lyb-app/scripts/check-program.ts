@@ -1,5 +1,6 @@
 // Vérifie que le moteur génère des séances valides et variées pour toutes les combinaisons.
 import { generateSession, generateWeek, PLAN_SLOTS } from "../src/lib/program/generator";
+import { AVOID_OPTIONS, containsAvoided, type AvoidId } from "../src/lib/program/avoid";
 import { EQUIPMENT_PRESETS, needsMissing, type Equip } from "../src/lib/program/equipment";
 import type { Level, PlanId, Profile } from "../src/lib/program/types";
 
@@ -53,6 +54,23 @@ for (const preset of EQUIPMENT_PRESETS) {
   }
 }
 
+// Mouvements à éviter : seuls, puis tous ensemble, avec plusieurs profils de matériel
+const avoidSets: AvoidId[][] = [...AVOID_OPTIONS.map((o) => [o.id]), AVOID_OPTIONS.map((o) => o.id)];
+for (const avoid of avoidSets) for (const preset of EQUIPMENT_PRESETS) {
+  const have = new Set<Equip>(preset.items);
+  for (const plan of plans) for (const level of levels) {
+    const profile: Profile = { plan, level, sex: "homme", division: "pro", days: [0, 1, 3, 4, 5], startDate: "2026-11-02", equipment: preset.items, avoid };
+    for (let week = 1; week <= 12; week++) for (const s of generateWeek(profile, week)) {
+      const names = [...s.warmup, ...s.main, s.mobility].flatMap((b) => [b.title, ...b.items.map((i) => i.name)]);
+      for (const txt of [...names, ...s.tags]) {
+        if (containsAvoided(txt, avoid)) fail(`évite ${avoid.join("+")} / ${preset.id}/${plan}/${level} S${week}: « ${txt} »`);
+        if (needsMissing(txt, have)) fail(`évite ${avoid.join("+")} / ${preset.id}/${plan}/${level} S${week}: « ${txt} » demande du matériel absent`);
+      }
+      if (/undefined|NaN/.test(JSON.stringify(s))) fail(`évite ${avoid.join("+")} / ${preset.id}: valeur manquante`);
+    }
+  }
+}
+
 const sample: Profile = { plan: "build", level: "intermediaire", sex: "femme", division: "open", days: [0, 2, 5], startDate: "2026-11-02" };
 for (const w of [1, 6, 12]) {
   console.log(`\n=== Build · intermédiaire · semaine ${w} ===`);
@@ -66,5 +84,8 @@ for (const s of generateWeek(bw, 6)) {
   console.log(`- ${s.title} (${s.adapted} adaptations)`);
   for (const b of s.main) console.log(`    ${b.title}: ${b.items.map((i) => `${i.name} ${i.dose}`).join(" | ")}`);
 }
+const noLunge: Profile = { ...sample, equipment: ["sled", "kettlebells"], avoid: ["burpees", "lunges"] };
+console.log(`\n=== Sled + kettlebells · sans burpees ni fentes · Build · semaine 6, séance Hyrox ===`);
+for (const b of generateWeek(noLunge, 6)[2].main) console.log(`    ${b.title}: ${b.items.map((i) => `${i.name} ${i.dose}`).join(" | ")}`);
 console.log(errors ? `\n${errors} erreur(s)` : "\n✓ toutes les combinaisons sont valides");
 process.exit(errors ? 1 : 0);

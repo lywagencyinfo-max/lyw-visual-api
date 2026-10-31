@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { ArrowLeft } from "lucide-react";
+import { AvoidPicker } from "@/components/AvoidPicker";
 import { EquipmentPicker } from "@/components/EquipmentPicker";
 import { Logo, Pill } from "@/components/ui";
 import { planById } from "@/lib/plans";
+import type { AvoidId } from "@/lib/program/avoid";
 import { ALL_EQUIPMENT, type Equip } from "@/lib/program/equipment";
 import { DAY_LABELS, parseISODate } from "@/lib/program/schedule";
 import type { Division, Level, Profile, Sex } from "@/lib/program/types";
@@ -38,6 +40,7 @@ function Editor({ initial }: { initial: Profile }) {
   const [division, setDivision] = useState<Division>(initial.division);
   const [days, setDays] = useState<number[]>(initial.days);
   const [equipment, setEquipment] = useState<Equip[]>(initial.equipment ?? ALL_EQUIPMENT);
+  const [avoid, setAvoid] = useState<AvoidId[]>(initial.avoid ?? []);
   const plan = planById(initial.plan);
 
   const toggleDay = (d: number) =>
@@ -48,7 +51,7 @@ function Editor({ initial }: { initial: Profile }) {
     });
 
   const save = () => {
-    saveProfile({ ...initial, level, sex, division, days, equipment });
+    saveProfile({ ...initial, level, sex, division, days, equipment, avoid });
     router.push("/app");
   };
 
@@ -74,6 +77,15 @@ function Editor({ initial }: { initial: Profile }) {
         <h2 className="text-lg font-black">Mon matériel</h2>
         <p className="mb-4 text-sm text-ink-soft">Coche tout ce à quoi tu as accès. Toutes tes séances, passées et à venir, sont recalculées.</p>
         <EquipmentPicker value={equipment} onChange={setEquipment} />
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-black">Mouvements à éviter</h2>
+        <p className="mb-4 text-sm text-ink-soft">
+          Gêne, blessure ou simple préférence : coche ce que tu ne veux pas faire. Chaque exercice concerné est remplacé par une alternative
+          adaptée à ton matériel. En cas de douleur, consulte un professionnel de santé.
+        </p>
+        <AvoidPicker value={avoid} onChange={setAvoid} />
       </section>
 
       <section className="mt-8">

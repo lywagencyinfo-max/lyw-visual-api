@@ -1,3 +1,4 @@
+import type { AvoidId } from "./avoid";
 import type { Equip } from "./equipment";
 
 export type PlanId = "start" | "build" | "pro" | "race";
@@ -31,6 +32,8 @@ export interface Profile {
   billing?: Billing;
   /** Matériel disponible ; absent = salle complète */
   equipment?: Equip[];
+  /** Familles de mouvements à éviter */
+  avoid?: AvoidId[];
 }
 
 export interface Item {
@@ -73,6 +76,6 @@ export interface Session {
   mobility: Block;
   coachNote: string;
   tags: string[];
-  /** Nombre de mouvements remplacés faute de matériel */
+  /** Nombre de mouvements remplacés (matériel absent ou mouvement à éviter) */
   adapted: number;
 }

@@ -62,6 +62,17 @@ ou burpees sur une station Hyrox). Les doses sont converties (mètres d'ergomèt
 répétitions doublées au poids du corps). La course n'est jamais remplacée. Chaque séance affiche le nombre de
 mouvements adaptés, et chaque mouvement remplacé indique ce qu'il remplace.
 
+## Mouvements à éviter (`lyb-app/src/lib/program/avoid.ts`)
+
+Dans le profil, l'athlète peut cocher des familles de mouvements à éviter (gêne, blessure, préférence) :
+burpees & mountain climbers, fentes (y compris les étirements en fente), sauts & impacts, course à pied,
+charges au-dessus de la tête, tractions & suspension, pompes & dips, soulevé de terre & swings.
+
+Ce filtre s'applique après l'adaptation au matériel. Chaque mouvement concerné est remplacé par la première
+alternative dont le matériel est coché et qui n'appartient à aucune autre famille évitée (ex. fentes → goblet squat
+→ air squats ; burpees → kettlebell swings → air squats ; course → rameur → SkiErg → air bike → marche rapide en côte).
+Les doses sont converties (mètres de fente → répétitions, mètres de course → mètres de rameur ou calories).
+
 ## Statut
 
 - Profil et séances terminées stockés dans le navigateur (localStorage).
