@@ -10,7 +10,7 @@ bloc principal et une session de mobilité**.
 cd lyb-app
 npm install
 npm run dev            # http://localhost:3000
-npm run check:program  # vérifie toutes les combinaisons formule × niveau × 36 semaines
+npm run check:program  # vérifie formules × niveaux × matériel × 36 semaines
 ```
 
 ## Formules
@@ -47,6 +47,20 @@ Le temps de chaque simulation peut être enregistré : il sert de référence po
 
 Les séances sont **déterministes** : tous les abonnés d'une même formule et d'un même niveau ont la même séance le même jour
 (utile pour une communauté, un classement, du contenu social).
+
+## Matériel (`lyb-app/src/lib/program/equipment.ts`)
+
+Dans son **profil** (page `/profil`, ou à l'inscription), l'athlète coche le matériel auquel il a accès :
+machines (rameur, SkiErg, air bike, sled), charges (barre, haltères, kettlebells, wall ball, sandbag),
+gymnastique et accessoires (barre de traction, anneaux, box, corde, élastiques, rouleau). Quatre raccourcis :
+box / salle Hyrox, salle de musculation, home gym, poids du corps.
+
+Les séances sont écrites pour une salle complète, puis chaque mouvement qui demande du matériel non coché est
+remplacé par la meilleure alternative disponible (ex. back squat → goblet squat → bulgarian split squat tempo ;
+sled pull → ring rows → rowing haltère → rowing inversé sous une table ; rameur → SkiErg → air bike → course,
+ou burpees sur une station Hyrox). Les doses sont converties (mètres d'ergomètre → course, calories → burpees,
+répétitions doublées au poids du corps). La course n'est jamais remplacée. Chaque séance affiche le nombre de
+mouvements adaptés, et chaque mouvement remplacé indique ce qu'il remplace.
 
 ## Statut
 

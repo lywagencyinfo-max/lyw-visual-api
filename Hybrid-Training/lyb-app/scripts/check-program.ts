@@ -1,5 +1,6 @@
 // Vérifie que le moteur génère des séances valides et variées pour toutes les combinaisons.
 import { generateSession, generateWeek, PLAN_SLOTS } from "../src/lib/program/generator";
+import { EQUIPMENT_PRESETS, needsMissing, type Equip } from "../src/lib/program/equipment";
 import type { Level, PlanId, Profile } from "../src/lib/program/types";
 
 const plans: PlanId[] = ["start", "build", "pro", "race"];
@@ -39,12 +40,31 @@ const race2: Profile = { ...race, raceDate: "2027-04-18" };
 if (generateSession(race2, 12, 4).kind !== "simulation") fail("Race Prep cycle 1 : simulation attendue en S12");
 if (generateSession(race2, 24, 4).kind !== "race-activation") fail("Race Prep cycle 2 : activation attendue en S24");
 
+// Matériel : aucune séance ne doit demander du matériel non coché
+for (const preset of EQUIPMENT_PRESETS) {
+  const have = new Set<Equip>(preset.items);
+  for (const plan of plans) for (const level of levels) {
+    const profile: Profile = { plan, level, sex: "femme", division: "open", days: [0, 1, 3, 4, 5], startDate: "2026-11-02", equipment: preset.items };
+    for (let week = 1; week <= 24; week++) for (const s of generateWeek(profile, week)) {
+      const texts = [s.title, ...s.tags, ...[...s.warmup, ...s.main, s.mobility].flatMap((b) => [b.title, ...b.items.map((i) => i.name)])];
+      for (const txt of texts) if (needsMissing(txt, have)) fail(`${preset.id}/${plan}/${level} S${week}: « ${txt} » demande du matériel absent`);
+      if (/undefined|NaN/.test(JSON.stringify(s))) fail(`${preset.id}/${plan}/${level} S${week}: valeur manquante`);
+    }
+  }
+}
+
 const sample: Profile = { plan: "build", level: "intermediaire", sex: "femme", division: "open", days: [0, 2, 5], startDate: "2026-11-02" };
 for (const w of [1, 6, 12]) {
   console.log(`\n=== Build · intermédiaire · semaine ${w} ===`);
   for (const s of generateWeek(sample, w)) {
     console.log(`- ${s.title} (${s.minutes}', ${s.rpe}) → ${s.main.map((b) => `${b.title} [${b.format ?? ""}]`).join(" + ")} · ${s.mobility.title}`);
   }
+}
+const bw: Profile = { ...sample, equipment: [] };
+console.log(`\n=== Poids du corps · Build · semaine 6 ===`);
+for (const s of generateWeek(bw, 6)) {
+  console.log(`- ${s.title} (${s.adapted} adaptations)`);
+  for (const b of s.main) console.log(`    ${b.title}: ${b.items.map((i) => `${i.name} ${i.dose}`).join(" | ")}`);
 }
 console.log(errors ? `\n${errors} erreur(s)` : "\n✓ toutes les combinaisons sont valides");
 process.exit(errors ? 1 : 0);

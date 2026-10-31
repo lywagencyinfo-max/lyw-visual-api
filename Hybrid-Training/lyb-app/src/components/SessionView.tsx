@@ -107,6 +107,11 @@ export function SessionView({ session, done, onToggleDone, result, onSaveResult 
             <span className="flex items-center gap-2"><IntensityDots value={session.intensity} /> {session.rpe}</span>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
+            {session.adapted > 0 && (
+              <Pill tone="jaune">
+                {session.adapted} mouvement{session.adapted > 1 ? "s" : ""} adapté{session.adapted > 1 ? "s" : ""} à ton matériel
+              </Pill>
+            )}
             {session.tags.map((t) => <Pill key={t}>{t}</Pill>)}
           </div>
         </div>

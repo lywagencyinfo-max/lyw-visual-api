@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { ChevronLeft, ChevronRight, Flag, Settings, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, Trophy, UserRound } from "lucide-react";
 import { BlockCard, SessionView } from "@/components/SessionView";
 import { IntensityDots, Logo, Pill } from "@/components/ui";
 import { CYCLE_LENGTH, PHASE_LABEL, weekMeta } from "@/lib/program/cycle";
@@ -92,8 +92,8 @@ export default function Dashboard() {
         <div className="flex items-center gap-2">
           {raceIn !== null && raceIn >= 0 && <Pill tone="rose">{raceIn === 0 ? "Jour J" : `J-${raceIn}`}</Pill>}
           <Pill tone="mint">{plan.name} · {plan.perWeek}/sem.</Pill>
-          <Link href={`/demarrer?plan=${profile.plan}`} className="rounded-lg p-2 text-ink-soft hover:bg-card" aria-label="Modifier mon programme">
-            <Settings className="h-5 w-5" />
+          <Link href="/profil" aria-label="Mon profil" className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm text-ink-soft hover:bg-card">
+            <UserRound className="h-5 w-5" /> <span className="hidden sm:inline">Profil</span>
           </Link>
         </div>
       </header>

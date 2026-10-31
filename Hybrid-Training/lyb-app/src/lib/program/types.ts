@@ -1,3 +1,5 @@
+import type { Equip } from "./equipment";
+
 export type PlanId = "start" | "build" | "pro" | "race";
 export type Billing = "monthly" | "yearly";
 export type Level = "debutant" | "intermediaire" | "avance";
@@ -27,6 +29,8 @@ export interface Profile {
   /** Race Prep : date ISO de la course, placée en semaine 12 du cycle */
   raceDate?: string;
   billing?: Billing;
+  /** Matériel disponible ; absent = salle complète */
+  equipment?: Equip[];
 }
 
 export interface Item {
@@ -69,4 +73,6 @@ export interface Session {
   mobility: Block;
   coachNote: string;
   tags: string[];
+  /** Nombre de mouvements remplacés faute de matériel */
+  adapted: number;
 }

@@ -3,8 +3,10 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
+import { EquipmentPicker } from "@/components/EquipmentPicker";
 import { BillingToggle } from "@/components/PricingCards";
 import { CYCLE_LENGTH } from "@/lib/program/cycle";
+import { ALL_EQUIPMENT, type Equip } from "@/lib/program/equipment";
 import { Logo } from "@/components/ui";
 import { PLANS, TRIAL_DAYS, priceFor } from "@/lib/plans";
 import { DAY_LABELS, DAY_NAMES, DEFAULT_DAYS, daysUntil, mondayOf, parseISODate, raceStartDate, toISODate } from "@/lib/program/schedule";
@@ -42,6 +44,7 @@ function Onboarding() {
   const [start, setStart] = useState<"this" | "next">("this");
   const [billing, setBilling] = useState<Billing>(params.get("billing") === "yearly" ? "yearly" : "monthly");
   const [raceDate, setRaceDate] = useState("");
+  const [equipment, setEquipment] = useState<Equip[]>(ALL_EQUIPMENT);
 
   const current = PLANS.find((p) => p.id === plan)!;
   const perWeek = current.perWeek;
@@ -68,7 +71,7 @@ function Onboarding() {
     const monday = mondayOf(new Date());
     if (start === "next") monday.setDate(monday.getDate() + 7);
     const startDate = isRace ? raceStartDate(raceDate, new Date()) : toISODate(monday);
-    saveProfile({ plan, level, sex, division, days, startDate, billing: current.yearly ? billing : "monthly", ...(isRace && { raceDate }) });
+    saveProfile({ plan, level, sex, division, days, equipment, startDate, billing: current.yearly ? billing : "monthly", ...(isRace && { raceDate }) });
     router.push("/app");
   };
 
@@ -117,7 +120,13 @@ function Onboarding() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-1 font-bold">4. Tes jours d&apos;entraînement</h2>
+        <h2 className="mb-1 font-bold">4. Ton matériel</h2>
+        <p className="mb-3 text-sm text-ink-dim">Coche ce à quoi tu as accès : les séances s&apos;adaptent. Modifiable à tout moment dans ton profil.</p>
+        <EquipmentPicker value={equipment} onChange={setEquipment} />
+      </section>
+
+      <section className="mt-8">
+        <h2 className="mb-1 font-bold">5. Tes jours d&apos;entraînement</h2>
         <p className="mb-3 text-sm text-ink-dim">Choisis {perWeek} jours ({days.length}/{perWeek}).</p>
         <div className="grid grid-cols-7 gap-2">
           {DAY_LABELS.map((label, d) => (
@@ -139,7 +148,7 @@ function Onboarding() {
       <section className="mt-8">
         {isRace ? (
           <>
-            <h2 className="mb-1 font-bold">5. Date de ta course</h2>
+            <h2 className="mb-1 font-bold">6. Date de ta course</h2>
             <p className="mb-3 text-sm text-ink-dim">
               Le programme est calé pour que la course tombe en semaine 12 : répétition générale 2 semaines avant, affûtage la dernière semaine.
             </p>
@@ -161,7 +170,7 @@ function Onboarding() {
           </>
         ) : (
           <>
-            <h2 className="mb-3 font-bold">5. Démarrage</h2>
+            <h2 className="mb-3 font-bold">6. Démarrage</h2>
             <div className="grid grid-cols-2 gap-3">
               <Choice active={start === "this"} onClick={() => setStart("this")}>Cette semaine</Choice>
               <Choice active={start === "next"} onClick={() => setStart("next")}>Lundi prochain</Choice>

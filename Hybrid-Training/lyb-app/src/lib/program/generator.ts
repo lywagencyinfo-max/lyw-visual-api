@@ -1,4 +1,5 @@
 import { CYCLE_LENGTH, STRENGTH_SCHEME, pick, scale, weekMeta } from "./cycle";
+import { ALL_EQUIPMENT, adaptBlock, adaptLabel, type Equip } from "./equipment";
 import { buildMobility, type MobilityFocus } from "./mobility";
 import { RACE_ORDER, STATIONS, STATION_PAIRS, stationItem, type StationId } from "./stations";
 import type { Block, Item, Level, PlanId, Profile, Session, SessionKind, WeekMeta } from "./types";
@@ -313,9 +314,17 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
   } else if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "simulation";
   const idx = w.week - 1 + (w.cycle - 1) * 3 + slot;
   const b = build(kind, profile, w, idx);
-  const warmup = buildWarmup(b.warmupFocus, idx, b.potentiate);
-  const mobility = buildMobility(b.mobility, idx);
-  const minutes = [...warmup, ...b.main, mobility].reduce((sum, blk) => sum + blk.minutes, 0);
+  const have = new Set<Equip>(profile.equipment ?? ALL_EQUIPMENT);
+  let adapted = 0;
+  const adapt = (blk: Block) => {
+    const r = adaptBlock(blk, have);
+    adapted += r.changes;
+    return r.block;
+  };
+  const warmup = buildWarmup(b.warmupFocus, idx, b.potentiate).map(adapt);
+  const main = b.main.map(adapt);
+  const mobility = adapt(buildMobility(b.mobility, idx));
+  const minutes = [...warmup, ...main, mobility].reduce((sum, blk) => sum + blk.minutes, 0);
   const intensity = kind === "simulation" ? 5 : kind === "race-activation" ? 2 : w.intensity;
   return {
     id: `w${absWeek}-s${slot}`,
@@ -329,10 +338,11 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
     rpe: w.deload || intensity <= 2 ? "RPE 5-6" : intensity >= 5 ? "RPE 8-9" : intensity >= 4 ? "RPE 7-8" : "RPE 6-7",
     minutes: Math.round(minutes / 5) * 5,
     warmup,
-    main: b.main,
+    main,
     mobility,
     coachNote: coachNote(w, kind),
-    tags: b.tags,
+    tags: [...new Set(b.tags.map((tag) => adaptLabel(tag, have)))],
+    adapted,
   };
 }
 
