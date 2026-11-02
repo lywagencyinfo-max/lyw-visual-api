@@ -11,6 +11,7 @@ import { generateSession, generateWeek } from "@/lib/program/generator";
 import { recoveryDay } from "@/lib/program/mobility";
 import { DAY_LABELS, DAY_NAMES, dateOfSlot, dayPlan, daysUntil, parseISODate, toISODate } from "@/lib/program/schedule";
 import { planById } from "@/lib/plans";
+import { useContent } from "@/lib/content/useContent";
 import { useAthlete } from "@/lib/store";
 
 const fmtDay = (d: Date) => d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
@@ -27,6 +28,7 @@ const RACE_DAY_PLAN = [
 
 export default function Dashboard() {
   const { ready, profile, done, toggleDone, results, saveResult } = useAthlete();
+  const { extras } = useContent();
   const today = useMemo(() => new Date(), []);
   const todayPlan = profile ? dayPlan(profile, today) : null;
   const currentWeek = Math.max(1, todayPlan?.week ?? 1);
@@ -51,13 +53,13 @@ export default function Dashboard() {
   const shownDay = day ?? (shownWeek === todayPlan?.week ? todayPlan.weekday : [...profile.days].sort()[0]);
   const meta = weekMeta(shownWeek);
   const plan = planById(profile.plan);
-  const sessions = generateWeek(profile, shownWeek);
+  const sessions = generateWeek(profile, shownWeek, extras);
   const monday = parseISODate(profile.startDate);
   monday.setDate(monday.getDate() + (shownWeek - 1) * 7);
   const selectedDate = new Date(monday);
   selectedDate.setDate(monday.getDate() + shownDay);
   const sel = dayPlan(profile, selectedDate);
-  const session = sel.slot !== null ? generateSession(profile, shownWeek, sel.slot) : null;
+  const session = sel.slot !== null ? generateSession(profile, shownWeek, sel.slot, extras) : null;
 
   // Prochaine séance après un jour de repos
   const next = (() => {
@@ -65,7 +67,7 @@ export default function Dashboard() {
       const d = new Date(selectedDate);
       d.setDate(d.getDate() + i);
       const p = dayPlan(profile, d);
-      if (p.slot !== null) return { date: d, session: generateSession(profile, p.week, p.slot) };
+      if (p.slot !== null) return { date: d, session: generateSession(profile, p.week, p.slot, extras) };
     }
     return null;
   })();

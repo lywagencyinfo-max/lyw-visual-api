@@ -73,10 +73,34 @@ alternative dont le matériel est coché et qui n'appartient à aucune autre fam
 → air squats ; burpees → kettlebell swings → air squats ; course → rameur → SkiErg → air bike → marche rapide en côte).
 Les doses sont converties (mètres de fente → répétitions, mètres de course → mètres de rameur ou calories).
 
+## Espace admin (`/admin`, `lyb-app/src/lib/content`)
+
+- **Exercices** : bibliothèque de mouvements avec photos, vidéos (fichier ou lien YouTube) et consignes. Un bouton
+  « Démo » apparaît sous chaque exercice des séances dont le nom correspond (nom, autres noms, ou nom qui commence
+  par celui de la fiche).
+- **WODs** : WOD cross-training, WOD léger (semaines de décharge) ou finisher, avec doses par niveau et aperçu.
+  Un WOD actif est programmé pour tous les abonnés la semaine qui suit son ajout, puis entre dans la rotation.
+  Ses mouvements passent par les mêmes adaptations (matériel, mouvements à éviter) que le reste du programme.
+- **Sans démo** : les mouvements du programme qui n'ont pas encore de photo ni de vidéo, du plus fréquent au moins fréquent.
+
+Sans configuration, l'espace admin fonctionne en **mode démo** : le contenu reste dans le navigateur.
+
+### Brancher Supabase (contenu partagé avec tous les abonnés)
+
+1. Créer un projet sur https://supabase.com (offre gratuite).
+2. SQL Editor → New query → coller le contenu de `lyb-app/supabase/schema.sql` → Run.
+3. Authentication → Users → Add user : créer ton compte admin (email + mot de passe).
+4. Dans le SQL Editor : `insert into public.admins (user_id) select id from auth.users where email = 'ton@email.com';`
+5. Project Settings → API : copier l'URL et la clé `anon` dans `lyb-app/.env.local` (voir `.env.example`),
+   et dans les variables d'environnement Vercel au moment du déploiement.
+
+La sécurité est assurée côté Supabase : lecture publique du contenu, écriture et envoi de médias réservés aux comptes
+de la table `admins`.
+
 ## Statut
 
 - Profil et séances terminées stockés dans le navigateur (localStorage).
-- **Non branché** : comptes utilisateurs, paiement (Stripe Billing conseillé), notifications.
+- **Non branché** : comptes abonnés, paiement (Stripe Billing conseillé), notifications.
 - Les charges Hyrox sont indicatives : à vérifier avec le rulebook de la saison en cours.
 
 Sources consultées pour la méthode : guides Hyrox de Centr, PureGym, FindYourEdge, VPA, BlenderBottle ;

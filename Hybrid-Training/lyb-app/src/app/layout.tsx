@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ContentProvider } from "@/lib/content/useContent";
 
 export const metadata: Metadata = {
   title: "Lift Your Body — Programmes Hyrox & cross-training",
@@ -12,7 +13,9 @@ export const viewport: Viewport = { themeColor: "#101013" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <ContentProvider>{children}</ContentProvider>
+      </body>
     </html>
   );
 }

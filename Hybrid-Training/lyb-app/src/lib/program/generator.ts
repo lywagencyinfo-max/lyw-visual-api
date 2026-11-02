@@ -7,6 +7,26 @@ import type { Block, Item, Level, PlanId, Profile, Session, SessionKind, WeekMet
 import { buildWarmup } from "./warmup";
 import { ENGINE, FINISHERS, FLUSH_WODS, WODS } from "./workouts";
 
+export type WodFn = (level: Level) => Block;
+
+/** WOD ajouté depuis l'espace admin. `debut` : lundi (ISO) de la semaine où il est programmé pour tous. */
+export interface ExtraWod {
+  fn: WodFn;
+  debut?: string;
+}
+
+/**
+ * WODs ajoutés depuis l'espace admin : programmés pour tous les abonnés la semaine qui suit leur ajout,
+ * puis intégrés à la rotation après ceux du programme.
+ */
+export interface ProgramExtras {
+  wods: ExtraWod[];
+  flush: ExtraWod[];
+  finishers: ExtraWod[];
+}
+
+const NO_EXTRAS: ProgramExtras = { wods: [], flush: [], finishers: [] };
+
 /** Ordre des séances dans la semaine pour chaque formule. */
 export const PLAN_SLOTS: Record<PlanId, SessionKind[]> = {
   start: ["force-wod", "hyrox"],
@@ -73,9 +93,16 @@ function rampUp(lift: string): Item[] {
   ];
 }
 
-function wodFor(w: WeekMeta & { cycle: number }, level: Level, offset: number): Block {
+/** WOD de la semaine (nouveauté programmée cette semaine-là), sinon rotation. */
+function fromPool(base: WodFn[], extra: ExtraWod[], idx: number, weekStart: string): WodFn {
+  const debuts = extra.filter((e) => e.debut === weekStart);
+  if (debuts.length) return pick(debuts, idx).fn;
+  return pick([...base, ...extra.map((e) => e.fn)], idx);
+}
+
+function wodFor(w: WeekMeta & { cycle: number }, level: Level, offset: number, extras: ProgramExtras, weekStart: string): Block {
   const idx = w.week - 1 + (w.cycle - 1) * 5 + offset;
-  return w.deload || w.phase === "taper" ? pick(FLUSH_WODS, idx)(level) : pick(WODS, idx)(level);
+  return w.deload || w.phase === "taper" ? fromPool(FLUSH_WODS, extras.flush, idx, weekStart)(level) : fromPool(WODS, extras.wods, idx, weekStart)(level);
 }
 
 function phaseFraction(w: WeekMeta): number {
@@ -106,7 +133,7 @@ interface Built {
   tags: string[];
 }
 
-function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: number }, idx: number): Built {
+function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: number }, idx: number, extras: ProgramExtras, weekStart: string): Built {
   const { level, sex, division } = profile;
   switch (kind) {
     case "force-wod":
@@ -121,10 +148,10 @@ function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: numbe
           label: "B", title: "Accessoires unilatéraux", format: "Superset · 3 tours", minutes: 12,
           items: [{ name: liftName(second, level), dose: "3 × 8 @ RPE 7" }, ...pick(LOWER_ACCESSORIES, idx)],
         });
-        blocks.push(pick(FINISHERS, idx)(level));
+        blocks.push(fromPool(FINISHERS, extras.finishers, idx, weekStart)(level));
       } else {
         blocks[0].items.push({ name: liftName(second, level), dose: "3 × 8 @ RPE 7 en superset", cue: "Enchaîné après chaque série principale, repos inchangé" });
-        blocks.push(wodFor(w, level, 0));
+        blocks.push(wodFor(w, level, 0, extras, weekStart));
       }
       const isSquat = /squat/i.test(lead.name);
       return {
@@ -150,7 +177,7 @@ function build(kind: SessionKind, profile: Profile, w: WeekMeta & { cycle: numbe
         potentiate: [{ name: `Montée en charge ${liftName(press, level)}`, dose: "3 séries progressives × 5-3-1" }, { name: "Strict pull-ups / ring rows", dose: "2 × 3" }],
         main: [
           strength,
-          wodFor(w, level, 6),
+          wodFor(w, level, 6, extras, weekStart),
           { label: "C", title: "Accessoires", format: "2-3 tours", minutes: 8, items: pick(UPPER_ACCESSORIES, idx) },
         ],
         mobility: "shoulders",
@@ -292,6 +319,12 @@ function coachNote(w: WeekMeta & { cycle: number }, kind: SessionKind): string {
   return PHASE_NOTES[w.phase];
 }
 
+/** Lundi (ISO) de la semaine `absWeek` du programme. */
+export function weekStartOf(profile: Profile, absWeek: number): string {
+  const [y, m, d] = profile.startDate.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + (absWeek - 1) * 7)).toISOString().slice(0, 10);
+}
+
 /** Cycle qui contient la course (les cycles précédents sont des cycles de préparation classiques). */
 function raceCycle(profile: Profile): number {
   if (!profile.raceDate) return 1;
@@ -305,7 +338,7 @@ export function sessionsPerWeek(plan: PlanId): number {
   return PLAN_SLOTS[plan].length;
 }
 
-export function generateSession(profile: Profile, absWeek: number, slot: number): Session {
+export function generateSession(profile: Profile, absWeek: number, slot: number, extras: ProgramExtras = NO_EXTRAS): Session {
   const slots = PLAN_SLOTS[profile.plan];
   const w = weekMeta(absWeek);
   let kind = slots[slot];
@@ -314,7 +347,7 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
     if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "race-activation";
   } else if (w.week === CYCLE_LENGTH && slot === slots.length - 1) kind = "simulation";
   const idx = w.week - 1 + (w.cycle - 1) * 3 + slot;
-  const b = build(kind, profile, w, idx);
+  const b = build(kind, profile, w, idx, extras, weekStartOf(profile, absWeek));
   const have = new Set<Equip>(profile.equipment ?? ALL_EQUIPMENT);
   let adapted = 0;
   const avoid = profile.avoid ?? [];
@@ -350,6 +383,6 @@ export function generateSession(profile: Profile, absWeek: number, slot: number)
   };
 }
 
-export function generateWeek(profile: Profile, absWeek: number): Session[] {
-  return PLAN_SLOTS[profile.plan].map((_, slot) => generateSession(profile, absWeek, slot));
+export function generateWeek(profile: Profile, absWeek: number, extras: ProgramExtras = NO_EXTRAS): Session[] {
+  return PLAN_SLOTS[profile.plan].map((_, slot) => generateSession(profile, absWeek, slot, extras));
 }

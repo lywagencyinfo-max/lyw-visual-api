@@ -150,6 +150,10 @@ export default function Home() {
       <footer className="border-t border-line py-8 text-center text-sm text-ink-dim">
         Lift Your Body · Programmes indicatifs : consulte un professionnel de santé avant de reprendre une activité intense.
         <br />HYROX est une marque de son propriétaire ; cette application n&apos;y est pas affiliée.
+        <br />
+        <Link href="/admin" className="mt-3 inline-block underline hover:text-ink">
+          Espace admin
+        </Link>
       </footer>
     </main>
   );

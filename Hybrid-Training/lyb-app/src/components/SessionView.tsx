@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { CheckCircle2, Circle, Clock, Printer, Trophy } from "lucide-react";
+import { CheckCircle2, Circle, Clock, PlayCircle, Printer, Trophy } from "lucide-react";
+import { findExercise } from "@/lib/content/match";
+import type { Exercise } from "@/lib/content/types";
+import { useContent } from "@/lib/content/useContent";
 import type { Block, Session } from "@/lib/program/types";
+import { MediaViewer } from "./MediaViewer";
 import { IntensityDots, Pill } from "./ui";
 
 export function BlockCard({ block, tone }: { block: Block; tone: "mint" | "jaune" | "rose" }) {
+  const { exercises } = useContent();
+  const [open, setOpen] = useState<Exercise | null>(null);
   return (
     <div className="rounded-xl border border-line bg-card p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +34,21 @@ export function BlockCard({ block, tone }: { block: Block; tone: "mint" | "jaune
         {block.items.map((it, i) => (
           <li key={i} className="text-sm">
             <div className="flex flex-wrap justify-between gap-x-4">
-              <span className="font-medium">{it.name}</span>
+              <span className="flex items-center gap-1.5 font-medium">
+                {it.name}
+                {(() => {
+                  const ex = findExercise(it.name, exercises);
+                  return ex && (ex.media.length > 0 || ex.cues) ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpen(ex)}
+                      className="no-print inline-flex items-center gap-1 rounded-full bg-mint/15 px-2 py-0.5 text-xs font-semibold text-mint hover:bg-mint/25"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5" /> Démo
+                    </button>
+                  ) : null;
+                })()}
+              </span>
               <span className="text-ink-soft">{it.dose}</span>
             </div>
             {it.cue && <p className="text-xs text-ink-dim">{it.cue}</p>}
@@ -36,6 +56,7 @@ export function BlockCard({ block, tone }: { block: Block; tone: "mint" | "jaune
         ))}
       </ul>
       {block.note && <p className="mt-3 border-t border-line pt-2 text-xs text-ink-soft">{block.note}</p>}
+      {open && <MediaViewer exercise={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }
