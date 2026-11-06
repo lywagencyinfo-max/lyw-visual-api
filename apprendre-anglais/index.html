@@ -1,0 +1,686 @@
+<title>Easy Peasy Anglais</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, a "carnet" of themes; English phrases are marked with a highlighter stroke like a student's notebook. */
+:root {
+  --bg: #EDF1F7;
+  --surface: #FFFFFF;
+  --ink: #15213A;
+  --muted: #56637E;
+  --line: #D3DBE7;
+  --brand: #2A55BE;
+  --brand-ink: #FFFFFF;
+  --mark: rgba(255, 205, 50, .62);
+  --sun: #FFCD32;
+  --sun-ink: #15213A;
+  --good: #1B7F54;
+  --good-bg: #E1F3EA;
+  --bad: #B8382F;
+  --bad-bg: #FBE6E3;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1524; --surface: #172138; --ink: #E7ECF6; --muted: #9DA9C3; --line: #2A3755;
+    --brand: #8EAAF2; --brand-ink: #0E1524; --mark: rgba(255, 205, 50, .30);
+    --sun: #FFCD32; --sun-ink: #15213A;
+    --good: #5ACB97; --good-bg: #133227; --bad: #F08A80; --bad-bg: #3A1D1D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1524; --surface: #172138; --ink: #E7ECF6; --muted: #9DA9C3; --line: #2A3755;
+  --brand: #8EAAF2; --brand-ink: #0E1524; --mark: rgba(255, 205, 50, .30);
+  --sun: #FFCD32; --sun-ink: #15213A;
+  --good: #5ACB97; --good-bg: #133227; --bad: #F08A80; --bad-bg: #3A1D1D;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.55;
+}
+.wrap {
+  max-width: 880px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, .theme-card:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+p { margin: 0; }
+.mark { background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%); padding: 0 .1em; }
+
+/* Header */
+header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; }
+.logo-badge {
+  width: 40px; height: 40px; border-radius: 12px; background: var(--sun); color: var(--sun-ink);
+  display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 18px;
+  transform: rotate(-6deg);
+}
+.logo-text { text-align: left; font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -.01em; }
+.logo-text small { display: block; font-family: var(--body); font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 13px; color: var(--muted);
+}
+.chip b { color: var(--ink); font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; font-size: 14px; }
+
+/* Hero */
+.hero { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
+.hero h1 { font-size: clamp(30px, 6vw, 48px); font-weight: 800; letter-spacing: -.02em; }
+.hero p { max-width: 60ch; color: var(--muted); font-size: 17px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 15px;
+  transition: transform .12s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.btn.sun { background: var(--sun); color: var(--sun-ink); border-color: var(--sun); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .45; cursor: default; transform: none; }
+
+/* Word of the day */
+.wotd {
+  display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: center;
+  padding: 18px 20px; border-radius: 16px; background: var(--surface); border: 1px dashed var(--line);
+}
+.wotd .label { grid-column: 1 / -1; }
+.wotd .en { font-family: var(--display); font-size: 24px; font-weight: 700; }
+.wotd .fr { color: var(--muted); }
+.wotd > div { min-width: 0; }
+
+/* Theme grid */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.section-head h2 { font-size: 24px; }
+.section-head span { color: var(--muted); font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.theme-card {
+  text-align: left; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px;
+  border-radius: 16px; background: var(--surface); border: 1px solid var(--line);
+  transition: transform .12s ease, border-color .12s ease;
+}
+.theme-card:hover { transform: translateY(-2px); border-color: var(--brand); }
+.theme-card .num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.theme-card h3 { font-size: 19px; }
+.theme-card .sample { font-size: 14px; color: var(--muted); }
+.theme-card .sample em { font-style: normal; color: var(--ink); }
+.bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--good); border-radius: 99px; transition: width .3s ease; }
+.card-foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+/* Theme view */
+.back { align-self: flex-start; background: none; border: 0; padding: 4px 0; color: var(--brand); font-weight: 700; }
+.theme-head { display: flex; flex-direction: column; gap: 8px; }
+.theme-head h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -.02em; }
+.tip {
+  display: flex; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--surface);
+  border: 1px solid var(--line); font-size: 15px;
+}
+.tip strong { font-family: var(--display); white-space: nowrap; }
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); align-self: flex-start; flex-wrap: wrap; }
+.tab { border: 0; background: transparent; padding: 8px 16px; border-radius: 10px; font-weight: 700; color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+
+/* Phrase list */
+.phrases { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.phrase { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: start; padding: 14px 16px; border-top: 1px solid var(--line); }
+.phrase:first-child { border-top: 0; }
+.phrase > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.phrase .en { font-family: var(--display); font-size: 20px; font-weight: 700; }
+.phrase .fr { font-size: 15px; }
+.phrase .pron { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.phrase .note { font-size: 14px; color: var(--muted); }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg);
+  display: grid; place-items: center; flex: none;
+}
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn.on { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+.learn-btn { font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); white-space: nowrap; }
+.learn-btn.on { background: var(--good-bg); color: var(--good); border-color: var(--good); }
+
+/* Flashcards */
+.deck { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+.deck-meta { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.flash {
+  min-height: 260px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;
+  padding: 28px 20px; position: relative;
+}
+.flash .big { font-family: var(--display); font-size: clamp(26px, 6vw, 38px); font-weight: 800; letter-spacing: -.01em; }
+.flash .hint { color: var(--muted); font-size: 14px; }
+.flash .fr { font-size: 20px; font-weight: 700; }
+.flash .pron { font-family: var(--mono); color: var(--muted); }
+.flash .note { color: var(--muted); font-size: 15px; max-width: 46ch; }
+.flash .speak-corner { position: absolute; top: 14px; right: 14px; }
+.deck-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* Quiz */
+.quiz { display: flex; flex-direction: column; gap: 16px; }
+.q-card { padding: 22px 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; }
+.q-ask { color: var(--muted); font-size: 14px; }
+.q-prompt { font-family: var(--display); font-size: clamp(22px, 5vw, 30px); font-weight: 800; }
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.opt {
+  text-align: left; padding: 14px 16px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg);
+  font-size: 16px; font-weight: 700; display: flex; gap: 10px; align-items: baseline;
+}
+.opt .k { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 400; }
+.opt:hover:not(:disabled) { border-color: var(--brand); }
+.opt.right { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+.opt:disabled { cursor: default; }
+.feedback { padding: 12px 14px; border-radius: 12px; font-size: 15px; }
+.feedback.ok { background: var(--good-bg); color: var(--good); }
+.feedback.ko { background: var(--bad-bg); color: var(--bad); }
+.progress-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.progress-dots i { width: 22px; height: 6px; border-radius: 99px; background: var(--line); }
+.progress-dots i.ok { background: var(--good); }
+.progress-dots i.ko { background: var(--bad); }
+.progress-dots i.now { background: var(--brand); }
+.score { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 32px 20px; }
+.score .big { font-family: var(--display); font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 20; max-width: calc(100% - 32px);
+}
+footer { color: var(--muted); font-size: 13px; text-align: center; }
+footer button { background: none; border: 0; color: var(--brand); text-decoration: underline; padding: 0; font-size: 13px; }
+
+@media (max-width: 520px) {
+  .phrase { grid-template-columns: auto 1fr; }
+  .phrase .learn-btn { grid-column: 2; justify-self: start; }
+  .tip { flex-direction: column; gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<div class="wrap" id="app">
+  <header class="top">
+    <button class="logo" id="home-btn" aria-label="Retour à l'accueil">
+      <span class="logo-badge" aria-hidden="true">EP</span>
+      <span class="logo-text">Easy Peasy<small>l'anglais de tous les jours, sans prise de tête</small></span>
+    </button>
+    <div class="stats" aria-label="Ta progression">
+      <span class="chip">Phrases apprises <b id="stat-learned">0</b></span>
+      <span class="chip">Points <b id="stat-xp">0</b></span>
+    </div>
+  </header>
+  <main id="view"></main>
+  <footer>
+    Le son utilise la voix anglaise de ton appareil. Ta progression reste sur ce navigateur.
+    <button id="reset-btn">Remettre à zéro</button>
+    <span id="reset-confirm" hidden> · Sûr ? <button id="reset-yes">Oui, effacer</button> · <button id="reset-no">Annuler</button></span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const THEMES = [
+  { id: "saluer", title: "Dire bonjour", sub: "Saluer et dire au revoir comme un natif",
+    tip: "« How are you? » n'est souvent pas une vraie question. On répond juste « Good, you? » et on passe à la suite.",
+    phrases: [
+      { en: "Hey!", fr: "Salut !", pron: "hé", note: "Le bonjour du quotidien, entre amis ou collègues." },
+      { en: "What's up?", fr: "Quoi de neuf ?", pron: "wats eup", note: "Réponse typique : « Not much », pas grand-chose." },
+      { en: "How's it going?", fr: "Comment ça va ?", pron: "haouz it go-ïng" },
+      { en: "Not bad, you?", fr: "Pas mal, et toi ?", pron: "nott bad, you" },
+      { en: "Long time no see!", fr: "Ça fait une paye !", pron: "lòng taïm no si" },
+      { en: "See ya!", fr: "À plus !", pron: "si-ya" },
+      { en: "Catch you later!", fr: "À plus tard !", pron: "katch you léïteur", note: "Souvent raccourci en « Later! »." },
+      { en: "Take care!", fr: "Prends soin de toi !", pron: "téïk kèr", note: "Pour finir une conversation gentiment." }
+    ] },
+  { id: "presenter", title: "Se présenter", sub: "Qui tu es, d'où tu viens, ce que tu fais",
+    tip: "On ne dit pas « I have 30 years » mais « I'm 30 ». L'âge se dit avec « to be ».",
+    phrases: [
+      { en: "I'm Léa.", fr: "Je m'appelle Léa.", pron: "aïm Léa", note: "Plus naturel que « My name is… »." },
+      { en: "I'm from France.", fr: "Je viens de France.", pron: "aïm from Frènss" },
+      { en: "I live in Lyon.", fr: "J'habite à Lyon.", pron: "aï liv in Lyon", note: "« live » se prononce « liv », avec un i très court." },
+      { en: "I work in sales.", fr: "Je travaille dans la vente.", pron: "aï weurk in séïlz" },
+      { en: "Nice to meet you!", fr: "Enchanté(e) !", pron: "naïss tou mit you" },
+      { en: "Where are you from?", fr: "Tu viens d'où ?", pron: "wèr ar you from" },
+      { en: "What do you do?", fr: "Tu fais quoi dans la vie ?", pron: "wat dou you dou", note: "On te demande ton métier." },
+      { en: "I'm learning English.", fr: "J'apprends l'anglais.", pron: "aïm leur-ning ing-glich" }
+    ] },
+  { id: "cafe", title: "Au café", sub: "Commander, payer, trouver une place",
+    tip: "Aux États-Unis, le pourboire (« tip ») est attendu : compte environ 15 à 20 %.",
+    phrases: [
+      { en: "Can I get a coffee?", fr: "Je peux avoir un café ?", pron: "kann aï guèt a kofi", note: "Bien plus courant à l'oral que « I would like »." },
+      { en: "For here or to go?", fr: "Sur place ou à emporter ?", pron: "for hir or tou go", note: "Version US. Au Royaume-Uni : « Eat in or take away? »." },
+      { en: "To go, please.", fr: "À emporter, s'il vous plaît.", pron: "tou go, pliz" },
+      { en: "I'll have the same.", fr: "Je prendrai la même chose.", pron: "aïl hav ze séïm" },
+      { en: "Is this seat taken?", fr: "Cette place est prise ?", pron: "iz ziss sit téï-keun" },
+      { en: "Can I get the check?", fr: "L'addition, s'il vous plaît.", pron: "kann aï guèt ze tchèk", note: "Au Royaume-Uni, on dit « the bill »." },
+      { en: "Keep the change.", fr: "Gardez la monnaie.", pron: "kip ze tchéïndj" },
+      { en: "Cheers!", fr: "Santé !", pron: "tchirz", note: "Au Royaume-Uni, ça veut aussi dire merci." }
+    ] },
+  { id: "reagir", title: "Réagir", sub: "Les petits mots qui rendent la conversation vivante",
+    tip: "« I'm down » veut dire « je suis partant », mais « I'm feeling down » veut dire « je déprime ».",
+    phrases: [
+      { en: "Cool!", fr: "Cool !", pron: "koul" },
+      { en: "No way!", fr: "Pas possible ! / Sérieux ?!", pron: "no wéï" },
+      { en: "For real?", fr: "Pour de vrai ?", pron: "for ril" },
+      { en: "That's awesome!", fr: "C'est génial !", pron: "zats o-somm" },
+      { en: "My bad.", fr: "Ma faute, désolé.", pron: "maï bad", note: "Une excuse légère et familière." },
+      { en: "No worries.", fr: "Pas de souci.", pron: "no weu-riz" },
+      { en: "I'm down!", fr: "Je suis partant(e) !", pron: "aïm daoun" },
+      { en: "Fair enough.", fr: "Ça se tient. / C'est pas faux.", pron: "fèr i-nof" }
+    ] },
+  { id: "plans", title: "Faire des plans", sub: "Proposer une sortie, prévenir d'un retard",
+    tip: "« Let's » (= let us) est la façon la plus simple de proposer quelque chose : « Let's go! », « Let's eat! ».",
+    phrases: [
+      { en: "Wanna grab a drink?", fr: "Tu veux boire un verre ?", pron: "wo-na grab a drink" },
+      { en: "Are you free tonight?", fr: "T'es dispo ce soir ?", pron: "ar you fri tou-naït" },
+      { en: "Let's hang out!", fr: "On se voit !", pron: "lèts hang aout", note: "« hang out » = traîner ensemble." },
+      { en: "Sounds good!", fr: "Ça marche !", pron: "saoundz goud" },
+      { en: "I'm running late.", fr: "Je suis en retard.", pron: "aïm reu-ning léït" },
+      { en: "I'm on my way.", fr: "Je suis en route.", pron: "aïm onn maï wéï" },
+      { en: "Text me!", fr: "Envoie-moi un texto !", pron: "tèkst mi" },
+      { en: "Rain check?", fr: "On remet ça à plus tard ?", pron: "réïn tchèk", note: "Pour reporter poliment une invitation." }
+    ] },
+  { id: "comprendre", title: "Se faire comprendre", sub: "Faire répéter sans stresser",
+    tip: "Les anglophones adorent qu'on essaie. Dire « Sorry, my English isn't great » met tout le monde à l'aise.",
+    phrases: [
+      { en: "Sorry?", fr: "Pardon ?", pron: "so-ri", note: "Pour faire répéter. Plus poli que « What? »." },
+      { en: "Can you say that again?", fr: "Tu peux répéter ?", pron: "kann you séï zat e-guèn" },
+      { en: "Slow down, please.", fr: "Plus lentement, s'il te plaît.", pron: "slo daoun, pliz" },
+      { en: "What does that mean?", fr: "Ça veut dire quoi ?", pron: "wat doz zat min" },
+      { en: "How do you say this in English?", fr: "Comment on dit ça en anglais ?", pron: "haou dou you séï ziss inn ing-glich" },
+      { en: "I don't get it.", fr: "Je ne comprends pas.", pron: "aï dont guèt it", note: "« get » = comprendre, en familier." },
+      { en: "Got it!", fr: "Compris !", pron: "gott it" },
+      { en: "My English isn't great.", fr: "Mon anglais n'est pas top.", pron: "maï ing-glich i-zeunt gréït" }
+    ] },
+  { id: "raccourcis", title: "Raccourcis à l'oral", sub: "Ce qu'on entend vraiment dans les séries",
+    tip: "Ces formes sont parfaites à l'oral et en texto, mais à éviter dans un mail professionnel.",
+    phrases: [
+      { en: "gonna", fr: "= going to · je vais (futur)", pron: "go-na", ex: "I'm gonna eat.", note: "I'm gonna eat. Je vais manger." },
+      { en: "wanna", fr: "= want to · vouloir", pron: "wo-na", ex: "I wanna go home.", note: "I wanna go home. Je veux rentrer." },
+      { en: "gotta", fr: "= got to · devoir", pron: "go-ta", ex: "I gotta go.", note: "I gotta go. Je dois y aller." },
+      { en: "kinda", fr: "= kind of · un peu, plutôt", pron: "kaïn-da", ex: "I'm kinda tired.", note: "I'm kinda tired. Je suis un peu fatigué." },
+      { en: "dunno", fr: "= don't know · sais pas", pron: "deu-no", ex: "I dunno.", note: "I dunno. J'sais pas." },
+      { en: "lemme", fr: "= let me · laisse-moi", pron: "lè-mi", ex: "Lemme see.", note: "Lemme see. Fais voir." },
+      { en: "gimme", fr: "= give me · donne-moi", pron: "gui-mi", ex: "Gimme a sec.", note: "Gimme a sec. Une seconde." },
+      { en: "y'all", fr: "= you all · vous tous", pron: "yôl", ex: "How are y'all?", note: "Typique du sud des États-Unis." }
+    ] },
+  { id: "textos", title: "Textos", sub: "Les abréviations des messages",
+    tip: "En texto, les majuscules donnent l'impression de crier. On écrit souvent tout en minuscules.",
+    phrases: [
+      { en: "lol", fr: "mdr", pron: "laugh out loud" },
+      { en: "btw", fr: "au fait", pron: "by the way" },
+      { en: "idk", fr: "j'sais pas", pron: "I don't know" },
+      { en: "omg", fr: "oh mon dieu", pron: "oh my god" },
+      { en: "brb", fr: "je reviens tout de suite", pron: "be right back" },
+      { en: "tbh", fr: "pour être honnête", pron: "to be honest" },
+      { en: "np", fr: "pas de souci", pron: "no problem" },
+      { en: "ty", fr: "merci", pron: "thank you" }
+    ] },
+  { id: "fauxamis", title: "Faux amis", sub: "Les pièges classiques pour les Français",
+    tip: "Un faux ami ressemble à un mot français mais n'a pas le même sens. Ce sont les erreurs les plus fréquentes.",
+    phrases: [
+      { en: "actually", fr: "en fait", pron: "ak-tchou-a-li", note: "≠ actuellement, qui se dit « currently »." },
+      { en: "eventually", fr: "finalement, à la fin", pron: "i-vèn-tchou-a-li", note: "≠ éventuellement, qui se dit « maybe »." },
+      { en: "a library", fr: "une bibliothèque", pron: "a laï-bre-ri", note: "≠ une librairie, qui se dit « a bookshop »." },
+      { en: "sensible", fr: "raisonnable", pron: "sèn-si-beul", note: "≠ sensible, qui se dit « sensitive »." },
+      { en: "to pretend", fr: "faire semblant", pron: "tou pri-tènd", note: "≠ prétendre, qui se dit « to claim »." },
+      { en: "a coin", fr: "une pièce de monnaie", pron: "a koïn", note: "≠ un coin, qui se dit « a corner »." },
+      { en: "excited", fr: "impatient(e), enthousiaste", pron: "ik-saï-tid", note: "« I'm so excited! » = j'ai trop hâte !" },
+      { en: "a location", fr: "un lieu, un endroit", pron: "a lo-kéï-cheun", note: "≠ une location, qui se dit « a rental »." }
+    ] }
+];
+
+/* ---------- state ---------- */
+const KEY = "easy-peasy-v1";
+let progress = { learned: {}, xp: 0 };
+try { const raw = localStorage.getItem(KEY); if (raw) progress = Object.assign(progress, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(progress)); } catch (e) {} }
+const pid = (t, i) => t.id + ":" + i;
+const allPhrases = THEMES.flatMap(t => t.phrases.map((p, i) => ({ ...p, theme: t, id: pid(t, i) })));
+
+function learnedCount(theme) {
+  if (!theme) return Object.keys(progress.learned).filter(k => progress.learned[k]).length;
+  return theme.phrases.filter((_, i) => progress.learned[pid(theme, i)]).length;
+}
+function updateStats() {
+  document.getElementById("stat-learned").textContent = learnedCount() + " / " + allPhrases.length;
+  document.getElementById("stat-xp").textContent = progress.xp;
+}
+function addXp(n) { progress.xp += n; save(); updateStats(); }
+function setLearned(id, on) { progress.learned[id] = on; save(); updateStats(); }
+
+/* ---------- helpers ---------- */
+const view = document.getElementById("view");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 1800);
+}
+
+const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+let enVoice = null;
+function pickVoice() {
+  if (!canSpeak) return;
+  const vs = speechSynthesis.getVoices();
+  enVoice = vs.find(v => /en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+}
+if (canSpeak) { pickVoice(); try { speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {} }
+function speak(text, slow) {
+  if (!canSpeak) { toast("Le son n'est pas disponible sur cet appareil."); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; if (enVoice) u.voice = enVoice;
+    u.rate = slow ? 0.7 : 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) { toast("Le son n'est pas disponible sur cet appareil."); }
+}
+const spokenText = p => p.ex || p.en;
+const ICON_SPEAK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+
+/* ---------- home ---------- */
+function dayIndex() { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5); }
+
+function renderHome() {
+  const w = allPhrases[dayIndex() % allPhrases.length];
+  const total = learnedCount();
+  view.innerHTML = `
+    <div class="wrap" style="padding:0;max-width:none">
+      <section class="hero">
+        <span class="eyebrow">Débutant · anglais familier</span>
+        <h1>Parle l'anglais <span class="mark">de la vraie vie</span>, pas celui des manuels.</h1>
+        <p>Des phrases que les anglophones utilisent vraiment, avec la traduction, une prononciation écrite « à la française » et le son. Choisis un thème, écoute, puis teste-toi.</p>
+        <div class="hero-actions">
+          <button class="btn primary" id="start-btn">${total ? "Continuer" : "Commencer"} : ${esc(nextTheme().title)}</button>
+          <button class="btn sun" id="mix-btn">Quiz mélangé (8 questions)</button>
+        </div>
+      </section>
+
+      <section class="wotd" aria-label="Phrase du jour">
+        <span class="eyebrow label">Phrase du jour</span>
+        <div>
+          <div class="en"><span class="mark">${esc(w.en)}</span></div>
+          <div class="fr">${esc(w.fr)} · <span style="font-family:var(--mono);font-size:13px">${esc(w.pron)}</span></div>
+        </div>
+        <button class="icon-btn" data-say="${esc(spokenText(w))}" aria-label="Écouter ${esc(w.en)}">${ICON_SPEAK}</button>
+      </section>
+
+      <section style="display:flex;flex-direction:column;gap:14px">
+        <div class="section-head">
+          <h2>Les thèmes</h2>
+          <span>${THEMES.length} thèmes · ${allPhrases.length} phrases</span>
+        </div>
+        <div class="grid">
+          ${THEMES.map((t, i) => {
+            const n = learnedCount(t), pct = Math.round(n / t.phrases.length * 100);
+            return `<button class="theme-card" data-theme-id="${t.id}">
+              <span class="num">Thème ${i + 1}</span>
+              <h3>${esc(t.title)}</h3>
+              <span class="sample">${esc(t.sub)} · <em>${esc(t.phrases[0].en)}</em></span>
+              <span class="bar" aria-hidden="true"><i style="width:${pct}%"></i></span>
+              <span class="card-foot"><span>${n}/${t.phrases.length} apprises</span><span>${pct === 100 ? "Terminé" : pct + " %"}</span></span>
+            </button>`;
+          }).join("")}
+        </div>
+      </section>
+    </div>`;
+  view.querySelectorAll("[data-theme-id]").forEach(b => b.onclick = () => openTheme(b.dataset.themeId, "phrases"));
+  document.getElementById("start-btn").onclick = () => openTheme(nextTheme().id, "phrases");
+  document.getElementById("mix-btn").onclick = () => openMixedQuiz();
+  bindSpeak();
+  window.scrollTo(0, 0);
+}
+function nextTheme() { return THEMES.find(t => learnedCount(t) < t.phrases.length) || THEMES[0]; }
+function bindSpeak(root = view) {
+  root.querySelectorAll("[data-say]").forEach(b => b.onclick = e => { e.stopPropagation(); speak(b.dataset.say, b.dataset.slow === "1"); });
+}
+
+/* ---------- theme ---------- */
+let current = null;
+function openTheme(id, tab) {
+  current = THEMES.find(t => t.id === id);
+  const idx = THEMES.indexOf(current);
+  view.innerHTML = `
+    <div class="wrap" style="padding:0;max-width:none">
+      <button class="back" id="back">← Tous les thèmes</button>
+      <div class="theme-head">
+        <span class="eyebrow">Thème ${idx + 1} sur ${THEMES.length}</span>
+        <h1>${esc(current.title)}</h1>
+        <p style="color:var(--muted)">${esc(current.sub)}</p>
+      </div>
+      <div class="tip"><strong>Bon à savoir</strong><span>${esc(current.tip)}</span></div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="phrases">Les phrases</button>
+        <button class="tab" role="tab" data-tab="cards">Cartes mémo</button>
+        <button class="tab" role="tab" data-tab="quiz">Quiz</button>
+      </div>
+      <div id="panel"></div>
+    </div>`;
+  document.getElementById("back").onclick = renderHome;
+  view.querySelectorAll(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  showTab(tab);
+  window.scrollTo(0, 0);
+}
+function showTab(tab) {
+  view.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"));
+  const panel = document.getElementById("panel");
+  if (tab === "phrases") renderPhrases(panel);
+  if (tab === "cards") renderCards(panel);
+  if (tab === "quiz") startQuiz(panel, current.phrases.map((p, i) => ({ ...p, theme: current, id: pid(current, i) })), () => openTheme(current.id, "quiz"));
+}
+
+function renderPhrases(panel) {
+  const t = current;
+  panel.innerHTML = `<div class="phrases">${t.phrases.map((p, i) => {
+    const id = pid(t, i), on = !!progress.learned[id];
+    return `<div class="phrase">
+      <button class="icon-btn" data-say="${esc(spokenText(p))}" aria-label="Écouter ${esc(p.en)}">${ICON_SPEAK}</button>
+      <div>
+        <span class="en"><span class="mark">${esc(p.en)}</span></span>
+        <span class="fr">${esc(p.fr)}</span>
+        <span class="pron">on dit : ${esc(p.pron)}</span>
+        ${p.note ? `<span class="note">${esc(p.note)}</span>` : ""}
+      </div>
+      <button class="learn-btn ${on ? "on" : ""}" data-learn="${id}" aria-pressed="${on}">${on ? "Apprise ✓" : "Je la connais"}</button>
+    </div>`;
+  }).join("")}</div>
+  <div class="hero-actions" style="margin-top:16px">
+    <button class="btn primary" id="go-cards">Passer aux cartes mémo</button>
+    <button class="btn" id="slow-all">Tout écouter lentement</button>
+  </div>`;
+  bindSpeak(panel);
+  panel.querySelectorAll("[data-learn]").forEach(b => b.onclick = () => {
+    const on = !progress.learned[b.dataset.learn];
+    setLearned(b.dataset.learn, on);
+    if (on) addXp(2);
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
+    b.textContent = on ? "Apprise ✓" : "Je la connais";
+    if (on && learnedCount(t) === t.phrases.length) toast("Thème terminé, bravo !");
+  });
+  document.getElementById("go-cards").onclick = () => showTab("cards");
+  document.getElementById("slow-all").onclick = () => {
+    if (!canSpeak) { toast("Le son n'est pas disponible sur cet appareil."); return; }
+    try {
+      speechSynthesis.cancel();
+      t.phrases.forEach(p => { const u = new SpeechSynthesisUtterance(spokenText(p)); u.lang = "en-US"; if (enVoice) u.voice = enVoice; u.rate = 0.7; speechSynthesis.speak(u); });
+    } catch (e) {}
+  };
+}
+
+/* ---------- flashcards ---------- */
+function renderCards(panel) {
+  const t = current;
+  let deck = shuffle(t.phrases.map((p, i) => ({ ...p, id: pid(t, i) })));
+  let flipped = false, known = 0;
+  const totalCards = deck.length;
+  function draw() {
+    if (!deck.length) {
+      panel.innerHTML = `<div class="flash score">
+        <span class="eyebrow">Paquet terminé</span>
+        <div class="big">${known}/${totalCards}</div>
+        <p style="color:var(--muted)">phrases reconnues du premier coup</p>
+        <div class="deck-actions">
+          <button class="btn" id="again">Recommencer</button>
+          <button class="btn primary" id="to-quiz">Faire le quiz</button>
+        </div></div>`;
+      document.getElementById("again").onclick = () => renderCards(panel);
+      document.getElementById("to-quiz").onclick = () => showTab("quiz");
+      return;
+    }
+    const c = deck[0];
+    panel.innerHTML = `<div class="deck">
+      <div class="deck-meta"><span>Carte ${totalCards - deck.length + 1} · reste ${deck.length}</span><span>Touche la carte pour la retourner</span></div>
+      <div class="flash" id="flash" role="button" tabindex="0" aria-label="Retourner la carte">
+        <button class="icon-btn speak-corner" data-say="${esc(spokenText(c))}" aria-label="Écouter">${ICON_SPEAK}</button>
+        ${flipped ? `
+          <div class="big"><span class="mark">${esc(c.en)}</span></div>
+          <div class="fr">${esc(c.fr)}</div>
+          <div class="pron">on dit : ${esc(c.pron)}</div>
+          ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}
+        ` : `
+          <span class="eyebrow">Que veut dire…</span>
+          <div class="big">${esc(c.en)}</div>
+          <div class="hint">Réfléchis, puis retourne la carte</div>
+        `}
+      </div>
+      <div class="deck-actions">
+        ${flipped ? `
+          <button class="btn" id="later">À revoir</button>
+          <button class="btn primary" id="know">Je savais</button>
+        ` : `<button class="btn sun" id="flip">Voir la réponse</button>`}
+      </div></div>`;
+    bindSpeak(panel);
+    const flip = () => { if (!flipped) { flipped = true; draw(); speak(spokenText(c)); } };
+    const card = document.getElementById("flash");
+    card.onclick = flip;
+    card.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } };
+    if (!flipped) document.getElementById("flip").onclick = flip;
+    else {
+      document.getElementById("know").onclick = () => {
+        if (!c.retry) known++;
+        if (!progress.learned[c.id]) { setLearned(c.id, true); }
+        addXp(5); deck.shift(); flipped = false; draw();
+      };
+      document.getElementById("later").onclick = () => { c.retry = true; deck.push(deck.shift()); flipped = false; draw(); };
+    }
+  }
+  draw();
+}
+
+/* ---------- quiz ---------- */
+function makeQuestions(pool, n) {
+  return shuffle(pool).slice(0, n).map((p, k) => {
+    const toEn = k % 2 === 0;
+    const sameTheme = allPhrases.filter(x => x.theme === p.theme && x.en !== p.en);
+    const others = allPhrases.filter(x => x.theme !== p.theme);
+    const distract = shuffle(sameTheme).slice(0, 2).concat(shuffle(others).slice(0, 1));
+    const field = toEn ? "en" : "fr";
+    const opts = shuffle([p, ...distract]).map(x => x[field]);
+    return { p, toEn, opts, answer: p[field] };
+  });
+}
+function startQuiz(panel, pool, onRestart) {
+  const qs = makeQuestions(pool, Math.min(8, pool.length));
+  const results = [];
+  let i = 0;
+  function draw() {
+    if (i >= qs.length) {
+      const good = results.filter(Boolean).length;
+      const msg = good === qs.length ? "Parfait, easy peasy !" : good >= qs.length * 0.6 ? "Bien joué, continue comme ça." : "Pas grave : relis les phrases et réessaie.";
+      panel.innerHTML = `<div class="q-card score">
+        <span class="eyebrow">Résultat</span>
+        <div class="big">${good}/${qs.length}</div>
+        <p>${msg}</p>
+        <p style="color:var(--muted);font-size:14px">+${good * 10} points</p>
+        <div class="deck-actions">
+          <button class="btn primary" id="retry">Nouveau quiz</button>
+          <button class="btn" id="home2">Retour aux thèmes</button>
+        </div></div>`;
+      document.getElementById("retry").onclick = onRestart;
+      document.getElementById("home2").onclick = renderHome;
+      return;
+    }
+    const q = qs[i];
+    panel.innerHTML = `<div class="quiz">
+      <div class="progress-dots" aria-label="Question ${i + 1} sur ${qs.length}">${qs.map((_, k) => `<i class="${k < i ? (results[k] ? "ok" : "ko") : k === i ? "now" : ""}"></i>`).join("")}</div>
+      <div class="q-card">
+        <span class="q-ask">${q.toEn ? "Comment dit-on en anglais familier :" : "Que veut dire :"}</span>
+        <div class="q-prompt" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span>${esc(q.toEn ? q.p.fr : q.p.en)}</span>
+          ${q.toEn ? "" : `<button class="icon-btn" data-say="${esc(spokenText(q.p))}" aria-label="Écouter">${ICON_SPEAK}</button>`}
+        </div>
+        <div class="options">${q.opts.map((o, k) => `<button class="opt" data-opt="${k}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div id="fb"></div>
+      </div></div>`;
+    bindSpeak(panel);
+    panel.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(b, q));
+  }
+  function answer(btn, q) {
+    const chosen = q.opts[+btn.dataset.opt];
+    const ok = chosen === q.answer;
+    results.push(ok);
+    panel.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true;
+      if (q.opts[+b.dataset.opt] === q.answer) b.classList.add("right");
+    });
+    if (!ok) btn.classList.add("wrong");
+    if (ok) addXp(10);
+    const fb = document.getElementById("fb");
+    fb.innerHTML = `<div class="feedback ${ok ? "ok" : "ko"}">
+        <strong>${ok ? "Bravo !" : "Pas tout à fait."}</strong>
+        ${esc(q.p.en)} = ${esc(q.p.fr)}${q.p.note ? " · " + esc(q.p.note) : ""}
+      </div>
+      <div class="deck-actions" style="justify-content:flex-end;margin-top:12px">
+        <button class="btn primary" id="next">${i + 1 < qs.length ? "Question suivante" : "Voir mon score"}</button>
+      </div>`;
+    speak(spokenText(q.p));
+    const next = document.getElementById("next");
+    next.onclick = () => { i++; draw(); };
+    next.focus();
+  }
+  draw();
+}
+function openMixedQuiz() {
+  view.innerHTML = `<div class="wrap" style="padding:0;max-width:none">
+    <button class="back" id="back">← Tous les thèmes</button>
+    <div class="theme-head">
+      <span class="eyebrow">Tous les thèmes</span>
+      <h1>Quiz mélangé</h1>
+      <p style="color:var(--muted)">8 questions piochées dans tous les thèmes. 10 points par bonne réponse.</p>
+    </div>
+    <div id="panel"></div></div>`;
+  document.getElementById("back").onclick = renderHome;
+  startQuiz(document.getElementById("panel"), allPhrases, openMixedQuiz);
+  window.scrollTo(0, 0);
+}
+
+/* ---------- boot ---------- */
+document.getElementById("home-btn").onclick = renderHome;
+const rc = document.getElementById("reset-confirm");
+document.getElementById("reset-btn").onclick = () => { rc.hidden = false; };
+document.getElementById("reset-no").onclick = () => { rc.hidden = true; };
+document.getElementById("reset-yes").onclick = () => {
+  progress = { learned: {}, xp: 0 }; save(); updateStats(); rc.hidden = true; renderHome(); toast("Progression remise à zéro.");
+};
+updateStats();
+renderHome();
+</script>
