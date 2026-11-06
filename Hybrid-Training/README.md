@@ -97,6 +97,16 @@ Sans configuration, l'espace admin fonctionne en **mode démo** : le contenu res
 La sécurité est assurée côté Supabase : lecture publique du contenu, écriture et envoi de médias réservés aux comptes
 de la table `admins`.
 
+## Mettre en ligne et installer sur un téléphone
+
+L'application est installable (manifeste web, icônes, plein écran) et s'ouvre directement sur la séance du jour.
+
+1. **Vercel** (gratuit) : sur https://vercel.com, se connecter avec GitHub → Add New… → Project → importer
+   `lyw-visual-api` → **Root Directory : `Hybrid-Training/lyb-app`** → Deploy. Ajouter les variables Supabase
+   (Settings → Environment Variables) quand le projet Supabase existe.
+2. **iPhone** (Safari) : ouvrir l'adresse Vercel → bouton Partager → « Sur l'écran d'accueil ».
+3. **Android** (Chrome) : ouvrir l'adresse → menu ⋮ → « Installer l'application » (ou « Ajouter à l'écran d'accueil »).
+
 ## Statut
 
 - Profil et séances terminées stockés dans le navigateur (localStorage).
